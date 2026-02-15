@@ -1,0 +1,51 @@
+{
+  "camera": {
+    "host": "192.168.1.100",
+    "rtsp_port": 554,
+    "onvif_port": 2020,
+    "username": "your_camera_username",
+    "password": "your_camera_password",
+    "scan_positions": [-30, 0, 30],
+    "home_position": 0
+  },
+  "scan_intervals": {
+    "not_detected": 300,
+    "detected_once": 600,
+    "detected_active": 1200,
+    "night_mode": 1800
+  },
+  "night_mode": {
+    "enabled": true,
+    "start_time": "23:00",
+    "end_time": "06:00"
+  },
+  "fall_detection": {
+    "recheck_delay": 30,
+    "lying_threshold": 60,
+    "position_tolerance": 50,
+    "similarity_threshold": 0.85
+  },
+  "alerts": {
+    "morning_check_time": "10:00",
+    "inactivity_hours": 6,
+    "night_activity_start": "02:00",
+    "night_activity_end": "05:00"
+  },
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "sender": "your-email@gmail.com",
+      "password": "your-app-password",
+      "recipient": "recipient@example.com"
+    },
+    "daily_report_time": "21:00"
+  },
+  "privacy": {
+    "save_images": false,
+    "save_test_images": true,
+    "test_image_path": "/path/to/mimamori_halo/data/test_images",
+    "data_retention_days": 30
+  }
+}

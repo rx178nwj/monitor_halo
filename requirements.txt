@@ -1,0 +1,13 @@
+# AI/ML
+ultralytics>=8.0.0
+
+# Camera
+onvif-zeep>=0.2.12
+
+# Image Processing
+opencv-python>=4.8.0
+scikit-image>=0.21.0
+numpy>=1.24.0
+
+# Utilities
+python-dateutil>=2.8.2

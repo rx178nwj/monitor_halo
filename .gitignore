@@ -1,0 +1,41 @@
+# Configuration files with credentials
+config/settings.json
+
+# Data files
+data/*.json
+data/test_images/
+
+# Log files
+logs/*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# YOLO model (large file)
+*.pt
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak
+mimamori_snapshot.jpg
