@@ -69,6 +69,18 @@ wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt
 
 ### 3. 設定ファイルの作成
 
+**方法1: Web UIで設定（推奨）**
+
+```bash
+# 設定UIを起動
+python3 scripts/config_ui.py
+
+# ブラウザで http://localhost:5000 を開く
+# フォームに必要な情報を入力して保存
+```
+
+**方法2: 手動で設定**
+
 ```bash
 cp config/settings.example.json config/settings.json
 nano config/settings.json
@@ -84,13 +96,32 @@ nano config/settings.json
   - `password`: アプリパスワード（Gmailの場合）
   - `recipient`: 送信先メールアドレス
 
-### 4. 実行
+### 4. 監視を開始
 
 ```bash
 python3 scripts/monitor.py
 ```
 
-### 5. バックグラウンド実行（systemd）
+### 5. ダッシュボードで状態確認（オプション）
+
+監視システムとは別に、Webダッシュボードで現在の状態を確認できます。
+
+```bash
+# ダッシュボードを起動
+python3 scripts/dashboard.py
+
+# ブラウザで http://localhost:5001 を開く
+```
+
+**ダッシュボードの機能:**
+- 📊 リアルタイムの監視状態表示
+- 📈 本日の活動統計（検出回数、活動時間など）
+- 📅 時間別活動グラフ
+- 📝 最近の検出履歴
+- 🔔 アラート表示
+- 🔄 自動更新（30秒ごと）
+
+### 6. バックグラウンド実行（systemd）
 
 ```bash
 # サービスファイル作成
@@ -186,7 +217,9 @@ mimamori_halo/
 │   ├── settings.json           # 設定ファイル（gitignoreされます）
 │   └── settings.example.json   # 設定ファイルのサンプル
 ├── scripts/
-│   └── monitor.py              # メイン監視スクリプト
+│   ├── monitor.py              # メイン監視スクリプト
+│   ├── config_ui.py            # Web設定UI（ポート5000）
+│   └── dashboard.py            # Webダッシュボード（ポート5001）
 ├── data/                       # 日次データ（gitignoreされます）
 │   └── YYYY-MM-DD.json
 ├── logs/                       # ログファイル（gitignoreされます）
@@ -214,12 +247,29 @@ sudo apt-get install ffmpeg
 pip install -r requirements.txt
 ```
 
+## ✨ Web UI機能
+
+### 設定UI（ポート5000）
+- カメラ設定の入力フォーム
+- メール通知設定
+- スキャン間隔・夜間モード設定
+- 転倒検知パラメータ調整
+- プライバシー設定
+
+### ダッシュボード（ポート5001）
+- リアルタイム監視状態表示
+- 本日の検出回数・活動時間
+- 時間別活動グラフ
+- 最近の検出履歴タイムライン
+- アラート通知
+- 30秒ごとの自動更新
+
 ## 📝 TODO
 
 - [ ] メール通知システム実装
 - [ ] 日次レポート自動送信
 - [ ] 挨拶機能（TTS + Tapo音声）
-- [ ] Webダッシュボード
+- [x] Webダッシュボード
 - [ ] 複数カメラ対応
 
 ## ⚠️ 注意事項

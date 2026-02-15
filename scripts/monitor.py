@@ -79,12 +79,17 @@ class MimamoriHalo:
             }
     
     def save_today_data(self):
-        """本日のデータを保存"""
+        """本日のデータを保存（原子的な書き込み）"""
         today = datetime.now().strftime("%Y-%m-%d")
         data_file = DATA_DIR / f"{today}.json"
-        
-        with open(data_file, 'w', encoding='utf-8') as f:
+        temp_file = DATA_DIR / f"{today}.json.tmp"
+
+        # 一時ファイルに書き込み
+        with open(temp_file, 'w', encoding='utf-8') as f:
             json.dump(self.today_data, f, ensure_ascii=False, indent=2)
+
+        # 原子的に置き換え
+        temp_file.replace(data_file)
     
     def is_night_mode(self):
         """夜間モードかチェック"""
@@ -104,23 +109,38 @@ class MimamoriHalo:
         """カメラを指定角度に移動"""
         # 正規化された速度（-1 to 1）
         speed = 0.3 if angle > 0 else -0.3 if angle < 0 else 0
-        
+
         if speed != 0:
             request = self.ptz_service.create_type('ContinuousMove')
             request.ProfileToken = self.ptz_token
             request.Velocity = {'PanTilt': {'x': speed, 'y': 0}}
             self.ptz_service.ContinuousMove(request)
-            
+
             # 移動時間を計算（角度に応じて）
             move_time = abs(angle) / 30.0 * 0.5  # 30度で0.5秒
             time.sleep(move_time)
-            
+
             # 停止
             stop_request = self.ptz_service.create_type('Stop')
             stop_request.ProfileToken = self.ptz_token
             self.ptz_service.Stop(stop_request)
-        
+
         time.sleep(0.5)  # 安定待機
+
+    def move_camera_smooth(self, pan_speed, tilt_speed=0, duration=0.5):
+        """カメラを滑らかに移動（追尾用）"""
+        if pan_speed != 0 or tilt_speed != 0:
+            request = self.ptz_service.create_type('ContinuousMove')
+            request.ProfileToken = self.ptz_token
+            request.Velocity = {'PanTilt': {'x': pan_speed, 'y': tilt_speed}}
+            self.ptz_service.ContinuousMove(request)
+
+            time.sleep(duration)
+
+            # 停止
+            stop_request = self.ptz_service.create_type('Stop')
+            stop_request.ProfileToken = self.ptz_token
+            self.ptz_service.Stop(stop_request)
     
     def capture_snapshot(self):
         """カメラからスナップショット取得"""
@@ -237,17 +257,90 @@ class MimamoriHalo:
                 'persons': persons
             }
             
-            # 人が見つかったら終了
+            # 人が見つかったら追尾モードへ
             if persons:
-                return angle, image, persons[0]
-            
+                tracked_person = self.track_person(persons[0], image)
+                return angle, image, tracked_person
+
             # 画像削除（プライバシー）
             del image
-        
+
         # ホームポジションに戻る
         self.move_camera(CONFIG['camera']['home_position'])
-        
+
         return None, None, None
+
+    def track_person(self, person, initial_image):
+        """人物を1分間追尾"""
+        tracking_enabled = CONFIG.get('tracking', {}).get('enabled', True)
+        tracking_duration = CONFIG.get('tracking', {}).get('duration', 60)
+
+        if not tracking_enabled:
+            print("📷 追尾機能は無効です")
+            return person
+
+        print(f"🎯 人物追尾開始（{tracking_duration}秒間）")
+        start_time = time.time()
+
+        # 画像サイズ取得
+        img_height, img_width = initial_image.shape[:2]
+        center_x = img_width / 2
+        center_y = img_height / 2
+
+        # 許容範囲（画面中心から）
+        tolerance_x = img_width * 0.1  # 画面幅の10%
+
+        tracked_person = person
+
+        while (time.time() - start_time) < tracking_duration:
+            # 現在の画像を取得
+            image = self.capture_snapshot()
+            if image is None:
+                print("⚠️ スナップショット取得失敗")
+                break
+
+            # 人物検出
+            persons = self.detect_person(image)
+
+            if not persons:
+                print("❌ 人物を見失いました")
+                del image
+                break
+
+            # 最も信頼度の高い人物を選択
+            tracked_person = max(persons, key=lambda p: p['confidence'])
+            bbox = tracked_person['bbox']
+
+            # 人物の中心座標を計算
+            person_center_x = (bbox[0] + bbox[2]) / 2
+            person_center_y = (bbox[1] + bbox[3]) / 2
+
+            # 画面中心からのずれを計算
+            offset_x = person_center_x - center_x
+            offset_y = person_center_y - center_y
+
+            # 画面中心に近ければ追尾不要
+            if abs(offset_x) < tolerance_x:
+                print(f"✅ 中心に捕捉（オフセット: {offset_x:.0f}px）")
+            else:
+                # カメラを移動
+                # 正規化された速度（画面端に近いほど速く）
+                pan_speed = max(-0.3, min(0.3, offset_x / center_x * 0.2))
+
+                print(f"🎯 追尾中... オフセット: {offset_x:.0f}px, 速度: {pan_speed:.3f}")
+
+                self.move_camera_smooth(pan_speed, 0, 0.3)
+
+            # 画像削除
+            del image
+
+            # 短い待機
+            time.sleep(0.5)
+
+        elapsed = time.time() - start_time
+        print(f"✅ 追尾完了（{elapsed:.1f}秒間）")
+
+        return tracked_person
     
     def handle_detection(self, angle, image, person):
         """人物検出時の処理"""

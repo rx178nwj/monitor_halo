@@ -19,6 +19,11 @@
     "start_time": "23:00",
     "end_time": "06:00"
   },
+  "tracking": {
+    "enabled": true,
+    "duration": 60,
+    "center_tolerance": 0.1
+  },
   "fall_detection": {
     "recheck_delay": 30,
     "lying_threshold": 60,

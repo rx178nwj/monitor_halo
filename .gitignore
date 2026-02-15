@@ -3,6 +3,7 @@ config/settings.json
 
 # Data files
 data/*.json
+data/*.json.tmp
 data/test_images/
 
 # Log files
@@ -14,6 +15,10 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Flask
+instance/
+.webassets-cache
 
 # Virtual environment
 venv/
