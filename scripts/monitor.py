@@ -61,22 +61,31 @@ class MimamoriHalo:
         """本日のデータを読み込み"""
         today = datetime.now().strftime("%Y-%m-%d")
         data_file = DATA_DIR / f"{today}.json"
-        
+
         if data_file.exists():
-            with open(data_file, 'r') as f:
-                return json.load(f)
-        else:
-            return {
-                "date": today,
-                "events": [],
-                "summary": {
-                    "first_activity": None,
-                    "last_activity": None,
-                    "total_detections": 0,
-                    "lying_events": 0,
-                    "alerts": []
-                }
+            try:
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    if content.strip():
+                        return json.loads(content)
+            except json.JSONDecodeError as e:
+                print(f"⚠️ JSONファイルが破損しています: {e}")
+                print(f"新しいデータファイルを作成します...")
+            except Exception as e:
+                print(f"⚠️ データ読み込みエラー: {e}")
+
+        # ファイルが存在しないか、破損している場合は新規作成
+        return {
+            "date": today,
+            "events": [],
+            "summary": {
+                "first_activity": None,
+                "last_activity": None,
+                "total_detections": 0,
+                "lying_events": 0,
+                "alerts": []
             }
+        }
     
     def save_today_data(self):
         """本日のデータを保存（原子的な書き込み）"""
